@@ -73,13 +73,23 @@ public class SQLiteJDBC
 		if(f.exists()){
 			try{
 				stmt = connection.createStatement();
-				String command = "UPDATE Customer SET name=\""+name+"\", balance="+balance+" WHERE id=\""+id+"\"";
-				stmt.executeUpdate(command);
+				String command = "SELECT id FROM Customer WHERE id = \""+id+"\"";
+				ResultSet res = stmt.executeQuery(command);
+				connection.commit();
+				if(res.next()){
+					System.out.println("UPDATE");
+					command = "UPDATE Customer SET name=\""+name+"\", balance="+balance+" WHERE id=\""+id+"\"";
+					stmt.executeUpdate(command);
+				}else{
+					System.out.println("CREATE");
+					command = "INSERT INTO Customer (id, name, balance) VALUES (\""+id+"\", \""+name+"\", "+balance+")";
+					stmt.executeUpdate(command);
+				}
 				stmt.close();
 				connection.commit();
 
 			} catch ( Exception e ) {
-				System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+				System.err.println( e.getClass().getName() + ": " + e.getMessage());
 				System.exit(0);
 			}
 		}else{
@@ -139,14 +149,41 @@ public class SQLiteJDBC
 		}
 		return -1;
 	}
+	
+	/*public int db_get_client_perso(String id){
 
-	public double db_withdraw_fom_account(String id, double amount){
+		File f = new File("bankDataBase.db");
+		Statement stmt = null;
+		int perso;
+
+		if(f.exists()){
+			try{
+				stmt = connection.createStatement();
+				String command = "SELECT perso FROM Customer WHERE id = \""+id+"\"";
+				ResultSet res = stmt.executeQuery(command);
+				perso = res.getInt("perso");				
+				stmt.close();
+				connection.commit();
+				return perso;
+
+			} catch ( Exception sQLException ) {
+				return -1;
+			} 
+		}else{
+			System.out.println("Data base not found!");
+			System.exit(0);
+		}
+		return -1;
+	}
+	*/
+
+	public boolean db_withdraw_fom_account(String id, double amount){
 		double balance = db_get_client_balance(id);
 		if((balance-amount) < 0){
-			return amount;
+			return false;
 		}else{
 			db_update_balance(id, balance-amount);
-			return (balance-amount);
+			return true;
 		}
 	}
 	
@@ -171,6 +208,35 @@ public class SQLiteJDBC
 			System.out.println("Data base not found!");
 			System.exit(0);
 		}
+	}
+	
+	public boolean db_test_account(String id){
+
+		File f = new File("bankDataBase.db");
+		Statement stmt = null;
+		boolean test = false;
+
+		if(f.exists()){
+			try{
+				stmt = connection.createStatement();
+				String command = "SELECT id FROM Customer WHERE id = \""+id+"\"";
+				ResultSet res = stmt.executeQuery(command);
+				connection.commit();
+				if(res.next()){
+					test = true;
+				}
+				stmt.close();
+
+			} catch ( Exception e ) {
+				System.err.println( e.getClass().getName() + ": " + e.getMessage());
+				System.exit(0);
+			}
+		}else{
+			System.out.println("Data base not found!");
+			System.exit(0);
+		}
+		
+		return test;
 	}
 }
 
